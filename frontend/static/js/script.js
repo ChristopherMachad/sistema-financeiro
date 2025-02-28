@@ -1,5 +1,5 @@
 // Configuração da API
-const API_URL = 'http://localhost:5000/api';
+const API_URL = 'https://sistema-financeiro.onrender.com/api';
 
 // Elementos do DOM
 const authContainer = document.getElementById('auth-container');

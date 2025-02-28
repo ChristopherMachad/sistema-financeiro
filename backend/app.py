@@ -6,12 +6,12 @@ from werkzeug.security import generate_password_hash, check_password_hash
 import os
 
 app = Flask(__name__)
-app.secret_key = 'sua_chave_secreta_aqui'  # Importante para sessões
+app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'chave_secreta_padrao')  # Usar variável de ambiente
 
 # Configuração do CORS
 CORS(app, supports_credentials=True, resources={
     r"/*": {
-        "origins": ["http://localhost:8000"],
+        "origins": ["http://localhost:8000", "https://sistema-financeiro-frontend.onrender.com"],
         "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
         "allow_headers": ["Content-Type"],
         "supports_credentials": True
@@ -19,7 +19,7 @@ CORS(app, supports_credentials=True, resources={
 })
 
 # Configuração do banco de dados
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///financas.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///financas.db')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 

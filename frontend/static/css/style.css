@@ -1,0 +1,44 @@
+.table th {
+    background-color: #f8f9fa;
+}
+
+.btn-action {
+    margin: 0 2px;
+}
+
+.valor-positivo {
+    color: #28a745;
+}
+
+.valor-negativo {
+    color: #dc3545;
+}
+
+.status-badge {
+    padding: 5px 10px;
+    border-radius: 15px;
+    font-size: 0.9em;
+}
+
+.status-pendente {
+    background-color: #ffc107;
+    color: #000;
+}
+
+.status-pago {
+    background-color: #28a745;
+    color: #fff;
+}
+
+.status-recebido {
+    background-color: #17a2b8;
+    color: #fff;
+}
+
+.alert {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1050;
+    min-width: 300px;
+} 

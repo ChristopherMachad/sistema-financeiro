@@ -5,6 +5,8 @@ from datetime import datetime, timedelta
 from werkzeug.security import generate_password_hash, check_password_hash
 import os
 import logging
+from flask_session import Session
+import redis
 
 # Configuração de logging
 logging.basicConfig(level=logging.INFO)
@@ -13,6 +15,15 @@ logger = logging.getLogger(__name__)
 app = Flask(__name__)
 app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'chave_secreta_padrao')
 
+# Configuração do Redis
+redis_url = os.environ.get('REDIS_URL')
+if redis_url:
+    app.config['SESSION_TYPE'] = 'redis'
+    app.config['SESSION_REDIS'] = redis.from_url(redis_url)
+else:
+    app.config['SESSION_TYPE'] = 'filesystem'
+    app.config['SESSION_FILE_DIR'] = '/tmp/flask_session'
+
 # Configurações de sessão e cookies
 app.config.update(
     SESSION_COOKIE_SECURE=True,
@@ -20,6 +31,9 @@ app.config.update(
     SESSION_COOKIE_SAMESITE='None',
     PERMANENT_SESSION_LIFETIME=timedelta(days=7)
 )
+
+# Inicialização do Session
+Session(app)
 
 # Configuração do CORS
 CORS(app, supports_credentials=True, resources={
@@ -109,6 +123,8 @@ def registrar():
 def login():
     try:
         dados = request.get_json()
+        logger.info("Dados recebidos no login: %s", dados)
+        
         if not dados:
             logger.error("Dados não recebidos no login")
             return jsonify({'erro': 'Dados não recebidos'}), 400
@@ -118,19 +134,23 @@ def login():
             return jsonify({'erro': 'Username e password são obrigatórios'}), 400
 
         usuario = Usuario.query.filter_by(username=dados['username']).first()
+        logger.info("Usuário encontrado: %s", usuario is not None)
         
         if usuario and check_password_hash(usuario.password_hash, dados['password']):
             session.permanent = True
             session['usuario_id'] = usuario.id
-            logger.info(f"Login bem-sucedido: {dados['username']}")
+            session.modified = True
+            
+            logger.info("Login bem-sucedido: %s, Session ID: %s", dados['username'], session.sid if hasattr(session, 'sid') else 'N/A')
             response = jsonify({'mensagem': 'Login realizado com sucesso!'})
+            response.headers['Access-Control-Allow-Credentials'] = 'true'
             return response
         
-        logger.info(f"Tentativa de login mal-sucedida: {dados['username']}")
+        logger.info("Tentativa de login mal-sucedida: %s", dados['username'])
         return jsonify({'erro': 'Usuário ou senha inválidos'}), 401
     except Exception as e:
-        logger.error(f"Erro no login: {str(e)}")
-        return jsonify({'erro': 'Erro interno do servidor'}), 500
+        logger.error("Erro no login: %s", str(e), exc_info=True)
+        return jsonify({'erro': 'Erro interno do servidor', 'detalhes': str(e)}), 500
 
 @app.route('/api/logout', methods=['POST'])
 def logout():

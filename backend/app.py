@@ -6,19 +6,18 @@ from werkzeug.security import generate_password_hash, check_password_hash
 import os
 import logging
 from flask_session import Session
-import redis
 
 # Configuração de logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
-app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'chave_secreta_padrao')
+app.secret_key = 'chave_secreta_desenvolvimento'  # Chave fixa para desenvolvimento
 
-# Configuração do Redis
-redis_url = os.environ.get('REDIS_URL', 'redis://default:AXbfAAIjcDEwY2JlNGM5Y2M3YmU0M2IwODg3N2RiY2ExN2IyMDdhY3AxMA@striking-wolf-30431.upstash.io:6379')
-app.config['SESSION_TYPE'] = 'redis'
-app.config['SESSION_REDIS'] = redis.from_url(redis_url, ssl_cert_reqs=None)
+# Configuração da sessão
+app.config['SESSION_TYPE'] = 'filesystem'
+app.config['SESSION_FILE_DIR'] = '/tmp/flask_session'
+app.config['SESSION_FILE_THRESHOLD'] = 500
 
 # Configurações de sessão e cookies
 app.config.update(
@@ -34,21 +33,15 @@ Session(app)
 # Configuração do CORS
 CORS(app, supports_credentials=True, resources={
     r"/*": {
-        "origins": ["http://localhost:8000", "https://sistema-financeiro-frontend.onrender.com", "https://sistema-financeiro3.onrender.com"],
+        "origins": ["http://localhost:8000"],
         "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-        "allow_headers": ["Content-Type", "X-Requested-With", "Accept"],
-        "supports_credentials": True,
-        "expose_headers": ["Set-Cookie"],
-        "max_age": 3600
+        "allow_headers": ["Content-Type"],
+        "supports_credentials": True
     }
 })
 
 # Configuração do banco de dados
-database_url = os.environ.get('DATABASE_URL')
-if database_url and database_url.startswith("postgres://"):
-    database_url = database_url.replace("postgres://", "postgresql://", 1)
-
-app.config['SQLALCHEMY_DATABASE_URI'] = database_url or 'sqlite:///financas.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///financas.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)

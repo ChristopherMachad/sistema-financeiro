@@ -16,13 +16,9 @@ app = Flask(__name__)
 app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'chave_secreta_padrao')
 
 # Configuração do Redis
-redis_url = os.environ.get('REDIS_URL')
-if redis_url:
-    app.config['SESSION_TYPE'] = 'redis'
-    app.config['SESSION_REDIS'] = redis.from_url(redis_url)
-else:
-    app.config['SESSION_TYPE'] = 'filesystem'
-    app.config['SESSION_FILE_DIR'] = '/tmp/flask_session'
+redis_url = os.environ.get('REDIS_URL', 'redis://default:AXbfAAIjcDEwY2JlNGM5Y2M3YmU0M2IwODg3N2RiY2ExN2IyMDdhY3AxMA@striking-wolf-30431.upstash.io:6379')
+app.config['SESSION_TYPE'] = 'redis'
+app.config['SESSION_REDIS'] = redis.from_url(redis_url, ssl_cert_reqs=None)
 
 # Configurações de sessão e cookies
 app.config.update(

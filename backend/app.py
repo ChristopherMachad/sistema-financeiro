@@ -13,7 +13,7 @@ CORS(app, supports_credentials=True, resources={
     r"/*": {
         "origins": ["http://localhost:8000", "https://sistema-financeiro-frontend.onrender.com", "https://sistema-financeiro3.onrender.com"],
         "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-        "allow_headers": ["Content-Type"],
+        "allow_headers": ["Content-Type", "X-Requested-With", "Accept"],
         "supports_credentials": True
     }
 })

@@ -4,6 +4,11 @@ from flask_cors import CORS
 from datetime import datetime
 from werkzeug.security import generate_password_hash, check_password_hash
 import os
+import logging
+
+# Configuração de logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'chave_secreta_padrao')  # Usar variável de ambiente
@@ -14,7 +19,8 @@ CORS(app, supports_credentials=True, resources={
         "origins": ["http://localhost:8000", "https://sistema-financeiro-frontend.onrender.com", "https://sistema-financeiro3.onrender.com"],
         "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
         "allow_headers": ["Content-Type", "X-Requested-With", "Accept"],
-        "supports_credentials": True
+        "supports_credentials": True,
+        "expose_headers": ["Set-Cookie"]
     }
 })
 
@@ -25,11 +31,15 @@ if database_url and database_url.startswith("postgres://"):
 
 app.config['SQLALCHEMY_DATABASE_URI'] = database_url or 'sqlite:///financas.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['SESSION_COOKIE_SECURE'] = True
+app.config['SESSION_COOKIE_SAMESITE'] = 'None'
+
 db = SQLAlchemy(app)
 
 # Inicialização do banco de dados
 with app.app_context():
     db.create_all()
+    logger.info("Banco de dados inicializado")
 
 # Modelo de Usuário
 class Usuario(db.Model):
@@ -61,27 +71,58 @@ def requer_login(f):
 # Rotas de Autenticação
 @app.route('/api/registrar', methods=['POST'])
 def registrar():
-    dados = request.json
-    if Usuario.query.filter_by(username=dados['username']).first():
-        return jsonify({'erro': 'Nome de usuário já existe'}), 400
-    
-    novo_usuario = Usuario(
-        username=dados['username'],
-        password_hash=generate_password_hash(dados['password'])
-    )
-    db.session.add(novo_usuario)
-    db.session.commit()
-    return jsonify({'mensagem': 'Usuário criado com sucesso!'})
+    try:
+        dados = request.get_json()
+        if not dados:
+            logger.error("Dados não recebidos no registro")
+            return jsonify({'erro': 'Dados não recebidos'}), 400
+            
+        if not dados.get('username') or not dados.get('password'):
+            logger.error("Username ou password não fornecidos")
+            return jsonify({'erro': 'Username e password são obrigatórios'}), 400
+
+        if Usuario.query.filter_by(username=dados['username']).first():
+            logger.info(f"Tentativa de registro com username já existente: {dados['username']}")
+            return jsonify({'erro': 'Nome de usuário já existe'}), 400
+        
+        novo_usuario = Usuario(
+            username=dados['username'],
+            password_hash=generate_password_hash(dados['password'])
+        )
+        db.session.add(novo_usuario)
+        db.session.commit()
+        logger.info(f"Novo usuário registrado: {dados['username']}")
+        return jsonify({'mensagem': 'Usuário criado com sucesso!'})
+    except Exception as e:
+        logger.error(f"Erro no registro: {str(e)}")
+        db.session.rollback()
+        return jsonify({'erro': 'Erro interno do servidor'}), 500
 
 @app.route('/api/login', methods=['POST'])
 def login():
-    dados = request.json
-    usuario = Usuario.query.filter_by(username=dados['username']).first()
-    
-    if usuario and check_password_hash(usuario.password_hash, dados['password']):
-        session['usuario_id'] = usuario.id
-        return jsonify({'mensagem': 'Login realizado com sucesso!'})
-    return jsonify({'erro': 'Usuário ou senha inválidos'}), 401
+    try:
+        dados = request.get_json()
+        if not dados:
+            logger.error("Dados não recebidos no login")
+            return jsonify({'erro': 'Dados não recebidos'}), 400
+            
+        if not dados.get('username') or not dados.get('password'):
+            logger.error("Username ou password não fornecidos")
+            return jsonify({'erro': 'Username e password são obrigatórios'}), 400
+
+        usuario = Usuario.query.filter_by(username=dados['username']).first()
+        
+        if usuario and check_password_hash(usuario.password_hash, dados['password']):
+            session['usuario_id'] = usuario.id
+            logger.info(f"Login bem-sucedido: {dados['username']}")
+            response = jsonify({'mensagem': 'Login realizado com sucesso!'})
+            return response
+        
+        logger.info(f"Tentativa de login mal-sucedida: {dados['username']}")
+        return jsonify({'erro': 'Usuário ou senha inválidos'}), 401
+    except Exception as e:
+        logger.error(f"Erro no login: {str(e)}")
+        return jsonify({'erro': 'Erro interno do servidor'}), 500
 
 @app.route('/api/logout', methods=['POST'])
 def logout():

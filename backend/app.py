@@ -30,15 +30,8 @@ app.config.update(
 # Inicialização do Session
 Session(app)
 
-# Configuração do CORS
-CORS(app, supports_credentials=True, resources={
-    r"/*": {
-        "origins": ["http://localhost:8000"],
-        "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-        "allow_headers": ["Content-Type"],
-        "supports_credentials": True
-    }
-})
+# Configuração do CORS - Permitindo todas as origens em desenvolvimento
+CORS(app, supports_credentials=True)
 
 # Configuração do banco de dados
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///financas.db'

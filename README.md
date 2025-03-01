@@ -1,4 +1,4 @@
-# Sistema Financeiro - Documentação
+# Sist.F - Documentação
 
 ## Visão Geral
 Este é um sistema de controle financeiro desenvolvido com Flask (backend) que permite aos usuários gerenciar contas a pagar e receber.
@@ -19,7 +19,7 @@ CORS(app, supports_credentials=True, resources={...})
 ```
 - Permite requisições de domínios específicos:
   - `http://localhost:8000` (desenvolvimento local)
-  - `https://sistema-financeiro3.onrender.com` (frontend em produção)
+  - `https://sistf3.onrender.com` (frontend em produção)
 - Habilita credenciais para autenticação
 - Define métodos HTTP permitidos (GET, POST, PUT, DELETE)
 
@@ -182,5 +182,5 @@ def requer_login(f):
 - Sistema usa PostgreSQL em produção e SQLite em desenvolvimento
 
 ## Links do Projeto
-- Frontend: https://sistema-financeiro3.onrender.com
-- Backend: https://sistema-financeiro.onrender.com/api 
+- Frontend: https://sistf3.onrender.com
+- Backend: https://sistf.onrender.com/api 

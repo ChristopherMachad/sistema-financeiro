@@ -1,5 +1,5 @@
 // Configuração da API
-const API_URL = 'https://sistema-financeiro-btjl.onrender.com/api';
+const API_URL = 'https://sistf.onrender.com/api';
 
 // Elementos do DOM
 const authContainer = document.getElementById('auth-container');

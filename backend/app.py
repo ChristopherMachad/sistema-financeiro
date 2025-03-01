@@ -1,7 +1,7 @@
 from flask import Flask, request, jsonify, session
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
-from datetime import datetime
+from datetime import datetime, timedelta
 from werkzeug.security import generate_password_hash, check_password_hash
 import os
 import logging
@@ -11,7 +11,15 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
-app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'chave_secreta_padrao')  # Usar variável de ambiente
+app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'chave_secreta_padrao')
+
+# Configurações de sessão e cookies
+app.config.update(
+    SESSION_COOKIE_SECURE=True,
+    SESSION_COOKIE_HTTPONLY=True,
+    SESSION_COOKIE_SAMESITE='None',
+    PERMANENT_SESSION_LIFETIME=timedelta(days=7)
+)
 
 # Configuração do CORS
 CORS(app, supports_credentials=True, resources={
@@ -20,7 +28,8 @@ CORS(app, supports_credentials=True, resources={
         "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
         "allow_headers": ["Content-Type", "X-Requested-With", "Accept"],
         "supports_credentials": True,
-        "expose_headers": ["Set-Cookie"]
+        "expose_headers": ["Set-Cookie"],
+        "max_age": 3600
     }
 })
 
@@ -31,8 +40,6 @@ if database_url and database_url.startswith("postgres://"):
 
 app.config['SQLALCHEMY_DATABASE_URI'] = database_url or 'sqlite:///financas.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['SESSION_COOKIE_SECURE'] = True
-app.config['SESSION_COOKIE_SAMESITE'] = 'None'
 
 db = SQLAlchemy(app)
 
@@ -113,6 +120,7 @@ def login():
         usuario = Usuario.query.filter_by(username=dados['username']).first()
         
         if usuario and check_password_hash(usuario.password_hash, dados['password']):
+            session.permanent = True
             session['usuario_id'] = usuario.id
             logger.info(f"Login bem-sucedido: {dados['username']}")
             response = jsonify({'mensagem': 'Login realizado com sucesso!'})

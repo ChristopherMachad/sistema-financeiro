@@ -20,11 +20,8 @@ let editandoConta = null;
 const fetchConfig = {
     credentials: 'include',
     headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-        'X-Requested-With': 'XMLHttpRequest'
-    },
-    mode: 'cors'
+        'Content-Type': 'application/json'
+    }
 };
 
 // Funções auxiliares
